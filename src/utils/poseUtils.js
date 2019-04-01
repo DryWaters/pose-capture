@@ -1,12 +1,7 @@
 // https://github.com/tensorflow/tfjs-models/blob/master/posenet/demos/demo_util.js
 // https://medium.com/tensorflow/move-mirror-an-ai-experiment-with-pose-estimation-in-the-browser-using-tensorflow-js-2f7b769f9b23
 import * as posenet from "@tensorflow-models/posenet";
-// import similarity from "compute-cosine-similarity";  Not used if using more accurate detection with score
-// import VPTreeFactory from "vptree";
-
 const pointRadius = 3;
-const confidenceLevel = 0.13;
-// let vptree;
 
 function toTuple({ x, y }) {
   return [x, y];

@@ -155,9 +155,11 @@ class NewRecordingPage extends Component {
     this.setState(prevState => ({
       poseNet: { ...prevState.poseNet, showDebug: !prevState.poseNet.showDebug }
     }));
-    const image = new Image();
-    image.src = this.state.currentPose.src;
-    this.processPose(image);
+    if (this.state.currentPose) {
+      const image = new Image();
+      image.src = this.state.currentPose.src;
+      this.processPose(image);
+    }
   };
 
   handleClickedPose = async (timeStamp, img) => {
@@ -428,6 +430,19 @@ class NewRecordingPage extends Component {
               onClick={() => this.handleTagPose("rightBodyHook")}
             >
               Right Body Hook
+            </Button>
+          </div>
+          <div className={styles.poseTagCategory}>Rest</div>
+          <div className={styles.poseTagRow}>
+            <Button
+              className={
+                this.state.currentPose.tag === "rest"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("rest")}
+            >
+              Rest
             </Button>
           </div>
         </Col>
