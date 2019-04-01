@@ -28,7 +28,7 @@
   margin: 40px auto;
   max-width: 640px;
   width: 100%;
-  transform: scaleX(-1);
+  /* transform: scaleX(-1); */
 }
 
 .notRecording {
@@ -60,7 +60,6 @@
 .pose {
   margin: 10px;
   border: solid 3px black;
-  transform: scaleX(-1);
 }
 
 .pose:hover {

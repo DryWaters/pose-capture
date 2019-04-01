@@ -21,11 +21,10 @@ class NewRecordingPage extends Component {
     this.audioRef = React.createRef();
     this.state = {
       poseNet: {
-        showVideo: true,
         showDebug: false,
-        flipHorizontal: true,
-        imageScaleFactor: 0.5,
-        outputStride: 16,
+        flipHorizontal: false,
+        imageScaleFactor: 0.75,
+        outputStride: 8,
         minPoseConfidence: 0.1,
         minPartConfidence: 0.5,
         debugColor: "#f45342",
@@ -39,7 +38,8 @@ class NewRecordingPage extends Component {
       poses: [],
       captureDelay: 0,
       captureInterval: null,
-      currentPose: null
+      currentPose: null,
+      currentImage: null
     };
   }
 
@@ -56,6 +56,8 @@ class NewRecordingPage extends Component {
   }
 
   handleStopRecord = () => {
+    this.canvasRef.current.style.display = 'none'
+    this.videoRef.current.style.display = 'block';
     clearInterval(this.state.captureInterval);
   };
 
@@ -90,71 +92,47 @@ class NewRecordingPage extends Component {
     }
   };
 
-  paintToCanvas = async () => {
+  processPose = async img => {
     const ctx = this.canvasRef.current.getContext("2d");
     this.canvasRef.current.width = this.state.width;
     this.canvasRef.current.height = this.state.height;
-    const net = await posenet.load(0.75);
+    if (!this.net) {
+      this.net = await posenet.load(1.01);
+    }
 
-    const poseDetectionFrame = async () => {
-      let pose;
-      if (this.videoRef.current) {
-        pose = await net.estimateSinglePose(
-          this.videoRef.current,
-          this.state.poseNet.imageScaleFactor,
-          this.state.poseNet.flipHorizontal,
-          this.state.poseNet.outputStride
+    ctx.clearRect(0, 0, this.state.width, this.state.height);
+    ctx.save();
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+
+    const pose = await this.net.estimateSinglePose(
+      this.canvasRef.current,
+      this.state.poseNet.imageScaleFactor,
+      this.state.poseNet.flipHorizontal,
+      this.state.poseNet.outputStride
+    );
+
+    const poseData = processPose(pose);
+
+    if (this.state.poseNet.showDebug) {
+      if (pose.score > this.state.poseNet.minPoseConfidence) {
+        drawKeyPoints(
+          pose.keypoints,
+          this.state.poseNet.minPartConfidence,
+          this.state.poseNet.debugColor,
+          ctx
         );
-        const poseData = processPose(pose);
+        drawSkeleton(
+          pose.keypoints,
+          this.state.poseNet.minPartConfidence,
+          this.state.poseNet.debugColor,
+          this.state.poseNet.debugWidth,
+          ctx
+        );
+        drawBoundingBox(pose.keypoints, ctx, this.state.poseNet.debugBoxColor);
       }
-
-      ctx.clearRect(0, 0, this.state.width, this.state.height);
-
-      if (this.state.poseNet.showVideo) {
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.translate(-this.state.width, 0);
-        if (this.videoRef.current) {
-          ctx.drawImage(
-            this.videoRef.current,
-            0,
-            0,
-            this.state.width,
-            this.state.height
-          );
-        }
-        ctx.restore();
-      }
-
-      if (this.state.poseNet.showDebug) {
-        if (pose.score > this.state.poseNet.minPoseConfidence) {
-          drawKeyPoints(
-            pose.keypoints,
-            this.state.poseNet.minPartConfidence,
-            this.state.poseNet.debugColor,
-            ctx
-          );
-          drawSkeleton(
-            pose.keypoints,
-            this.state.poseNet.minPartConfidence,
-            this.state.poseNet.debugColor,
-            this.state.poseNet.debugWidth,
-            ctx
-          );
-          drawBoundingBox(
-            pose.keypoints,
-            ctx,
-            this.state.poseNet.debugBoxColor
-          );
-        }
-      }
-
-      if (this.videoRef.current && !this.videoRef.current.paused) {
-        requestAnimationFrame(poseDetectionFrame);
-      }
-    };
-
-    poseDetectionFrame();
+    }
+    return poseData;
   };
 
   setRecordingState = ({ id }) => {
@@ -177,30 +155,25 @@ class NewRecordingPage extends Component {
     this.setState(prevState => ({
       poseNet: { ...prevState.poseNet, showDebug: !prevState.poseNet.showDebug }
     }));
+    // this.processPose();
   };
 
-  handleClickedPose = (timeStamp, img) => {
-    this.setState({
-      videoState: "tagPose"
-    });
+  handleClickedPose = async (timeStamp, img) => {
+
     const correctPose = this.state.poses.filter(
       pose => pose.timeStamp === timeStamp
     );
+
     this.canvasRef.current.style.display = "block";
     this.videoRef.current.style.display = "none";
-    const ctx = this.canvasRef.current.getContext("2d");
-    ctx.clearRect(0, 0, this.state.width, this.state.height);
-    ctx.drawImage(img, 0, 0);
-    this.setState({
-      currentPose: correctPose[0]
-    });
-  };
+    const poseData = await this.processPose(img);
+    correctPose[0].poseData = poseData;
 
-  handleRecordPoses = () => {
+    console.log(correctPose);
     this.setState({
-      videoState: "recording"
+      currentPose: correctPose[0],
+      videoState: 'tagPose'
     });
-    this.paintToCanvas();
   };
 
   makeScreenshots = () => {
@@ -208,7 +181,9 @@ class NewRecordingPage extends Component {
       this.canvasRef.current.width = this.state.width;
       this.canvasRef.current.height = this.state.height;
       const ctx = this.canvasRef.current.getContext("2d");
-
+      
+      ctx.translate(this.state.width, 0);
+      ctx.scale(-1, 1);
       ctx.drawImage(
         this.videoRef.current,
         0,
@@ -224,7 +199,8 @@ class NewRecordingPage extends Component {
           src: dataURI,
           timeStamp: new moment().valueOf(),
           saved: false,
-          tag: null
+          tag: null,
+          poseData: null
         });
         return {
           ...prevState,

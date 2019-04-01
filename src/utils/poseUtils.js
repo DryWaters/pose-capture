@@ -13,24 +13,19 @@ function toTuple({ x, y }) {
 }
 
 export const processPose = pose => {
-  const normalizedPose = normalizePose(pose);
-  // return findMostSimliarMatch(normalizedPose);
+  return normalizePose(pose);
 };
 
 const normalizePose = pose => {
   const boundingBox = posenet.getBoundingBox(pose.keypoints);
   const normalizedArray = new Array(34);
-  const confidences = new Array(17);
-  let sumConfidences = 0;
 
   for (let index in pose.keypoints) {
-    sumConfidences += pose.keypoints[index].score;
-    confidences[index] = pose.keypoints[index].score;
     normalizedArray[index * 2] = pose.keypoints[index].position.x / boundingBox.maxX;
     normalizedArray[index * 2  + 1] = pose.keypoints[index].position.y / boundingBox.maxY;
   }
 
-  return [...normalizedArray, ...confidences, sumConfidences];
+  return normalizedArray;
 };
 
 export function drawKeyPoints(
