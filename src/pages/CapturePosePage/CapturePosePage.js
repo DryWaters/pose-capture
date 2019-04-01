@@ -31,6 +31,7 @@ class NewRecordingPage extends Component {
         debugWidth: 5
       },
       recordingState: "stopped",
+      videoState: "recording",
       width: 640,
       height: 480,
       poses: [],
@@ -174,19 +175,18 @@ class NewRecordingPage extends Component {
     }));
   };
 
-  handleClickedPose = timeStamp => {
+  handleClickedPose = (timeStamp, img) => {
     this.setState({
-      videoState: "playing"
+      videoState: "tagPose"
     });
-    const correctVideo = this.state.poses.filter(
-      video => video.timeStamp === timeStamp
+    const correctPose = this.state.poses.filter(
+      pose => pose.timeStamp === timeStamp
     );
-    this.videoRef.current.srcObject = null;
-    this.videoRef.current.src = null;
-    this.videoRef.current.src = correctVideo[0].src;
-    this.videoRef.current.currentTime = 0;
-    this.videoRef.current.play();
-    this.paintToCanvas();
+    this.canvasRef.current.style.display = "block";
+    this.videoRef.current.style.display = "none";
+    const ctx = this.canvasRef.current.getContext("2d");
+    ctx.clearRect(0, 0, this.state.width, this.state.height);
+    ctx.drawImage(img, 0, 0);
   };
 
   handleRecordPoses = () => {
@@ -286,7 +286,9 @@ class NewRecordingPage extends Component {
               src={pose.src}
               height="75px"
               alt="Recording Video"
-              onClick={() => this.handleClickedPose(pose.timeStamp)}
+              onClick={event =>
+                this.handleClickedPose(pose.timeStamp, event.target)
+              }
             />
             <div className={styles.poseStatus}>
               {pose.saved ? "\u{2705}" : "\u{274C}"}
