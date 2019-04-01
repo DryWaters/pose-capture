@@ -10,6 +10,7 @@ import {
 } from "../../utils/poseUtils";
 import moment from "moment";
 
+import beep from "../../assets/sounds/beep.wav";
 import styles from "./CapturePosePage.module.css";
 
 class NewRecordingPage extends Component {
@@ -17,6 +18,7 @@ class NewRecordingPage extends Component {
     super(props);
     this.videoRef = React.createRef();
     this.canvasRef = React.createRef();
+    this.audioRef = React.createRef();
     this.state = {
       poseNet: {
         showVideo: true,
@@ -36,7 +38,8 @@ class NewRecordingPage extends Component {
       height: 480,
       poses: [],
       captureDelay: 0,
-      captureInterval: null
+      captureInterval: null,
+      currentPose: null
     };
   }
 
@@ -166,7 +169,7 @@ class NewRecordingPage extends Component {
 
     this.setState({
       recordingState: newState,
-      videoState: 'recording'
+      videoState: "recording"
     });
   };
 
@@ -188,6 +191,9 @@ class NewRecordingPage extends Component {
     const ctx = this.canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, this.state.width, this.state.height);
     ctx.drawImage(img, 0, 0);
+    this.setState({
+      currentPose: correctPose[0]
+    });
   };
 
   handleRecordPoses = () => {
@@ -211,12 +217,14 @@ class NewRecordingPage extends Component {
         this.state.height
       );
       const dataURI = this.canvasRef.current.toDataURL("image/png");
+      this.audioRef.current.play();
       this.setState(prevState => {
         const newPoses = prevState.poses.slice();
         newPoses.push({
           src: dataURI,
           timeStamp: new moment().valueOf(),
-          saved: false
+          saved: false,
+          tag: null
         });
         return {
           ...prevState,
@@ -227,14 +235,19 @@ class NewRecordingPage extends Component {
     }, this.state.captureDelay * 1000);
   };
 
-  handleTagPose = timeStamp => {
+  handleTagPose = punchType => {
     // fetch upload video
     // if successful change to check mark
     // else stay unchecked
 
     this.setState(prevState => {
       const oldPoses = prevState.poses.slice();
-      oldPoses.find(pose => pose.timeStamp === timeStamp).saved = true;
+      const currentPose = oldPoses.find(
+        pose => pose.timeStamp === this.state.currentPose.timeStamp
+      );
+      currentPose.saved = true;
+      currentPose.tag = punchType;
+
       return {
         poses: oldPoses
       };
@@ -306,23 +319,95 @@ class NewRecordingPage extends Component {
             <div className={styles.poseTagHeader}>Tag Punch Type</div>
           </div>
           <div className={styles.poseTagRow}>
-            <Button>Jab</Button>
-            <Button>Power Rear</Button>
+            <Button
+              className={
+                this.state.currentPose.tag === "jab"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("jab")}
+            >
+              Jab
+            </Button>
+            <Button
+              className={
+                this.state.currentPose.tag === "powerRear"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("powerRear")}
+            >
+              Power Rear
+            </Button>
           </div>
           <div className={styles.poseTagCategory}>Hook</div>
           <div className={styles.poseTagRow}>
-            <Button>Left Hook</Button>
-            <Button>Right Hook</Button>
+            <Button
+              className={
+                this.state.currentPose.tag === "leftHook"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("leftHook")}
+            >
+              Left Hook
+            </Button>
+            <Button
+              className={
+                this.state.currentPose.tag === "rightHook"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("rightHook")}
+            >
+              Right Hook
+            </Button>
           </div>
           <div className={styles.poseTagCategory}>Uppercut</div>
           <div className={styles.poseTagRow}>
-            <Button>Left Uppercut</Button>
-            <Button>Right Uppercut</Button>
+            <Button
+              className={
+                this.state.currentPose.tag === "leftUppercut"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("leftUppercut")}
+            >
+              Left Uppercut
+            </Button>
+            <Button
+              className={
+                this.state.currentPose.tag === "rightUppercut"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("rightUppercut")}
+            >
+              Right Uppercut
+            </Button>
           </div>
           <div className={styles.poseTagCategory}>Body Hook</div>
           <div className={styles.poseTagRow}>
-            <Button>Left Body Hook</Button>
-            <Button>Right Body Hook</Button>
+            <Button
+              className={
+                this.state.currentPose.tag === "leftBodyHook"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("leftBodyHook")}
+            >
+              Left Body Hook
+            </Button>
+            <Button
+              className={
+                this.state.currentPose.tag === "rightBodyHook"
+                  ? styles.tagButtonSelected
+                  : ""
+              }
+              onClick={() => this.handleTagPose("rightBodyHook")}
+            >
+              Right Body Hook
+            </Button>
           </div>
         </Col>
       );
@@ -330,6 +415,7 @@ class NewRecordingPage extends Component {
 
     return (
       <Layout>
+        <audio ref={this.audioRef} src={beep} />
         <Container className={styles.capturePoseContainer}>
           <Row>
             <Col className={styles.debugContainer}>
