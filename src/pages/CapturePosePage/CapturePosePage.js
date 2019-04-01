@@ -165,7 +165,8 @@ class NewRecordingPage extends Component {
     }
 
     this.setState({
-      recordingState: newState
+      recordingState: newState,
+      videoState: 'recording'
     });
   };
 
@@ -298,6 +299,35 @@ class NewRecordingPage extends Component {
       });
     };
 
+    const displayPoseTaggingTools = () => {
+      return (
+        <Col xs={4} className={styles.poseTagContainer}>
+          <div>
+            <div className={styles.poseTagHeader}>Tag Punch Type</div>
+          </div>
+          <div className={styles.poseTagRow}>
+            <Button>Jab</Button>
+            <Button>Power Rear</Button>
+          </div>
+          <div className={styles.poseTagCategory}>Hook</div>
+          <div className={styles.poseTagRow}>
+            <Button>Left Hook</Button>
+            <Button>Right Hook</Button>
+          </div>
+          <div className={styles.poseTagCategory}>Uppercut</div>
+          <div className={styles.poseTagRow}>
+            <Button>Left Uppercut</Button>
+            <Button>Right Uppercut</Button>
+          </div>
+          <div className={styles.poseTagCategory}>Body Hook</div>
+          <div className={styles.poseTagRow}>
+            <Button>Left Body Hook</Button>
+            <Button>Right Body Hook</Button>
+          </div>
+        </Col>
+      );
+    };
+
     return (
       <Layout>
         <Container className={styles.capturePoseContainer}>
@@ -329,6 +359,9 @@ class NewRecordingPage extends Component {
               />
               <canvas className={styles.canvas} ref={this.canvasRef} />
             </Col>
+            {this.state.videoState === "tagPose"
+              ? displayPoseTaggingTools()
+              : ""}
           </Row>
           <Row>{displayRecordControls()}</Row>
           <Row>

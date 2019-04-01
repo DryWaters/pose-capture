@@ -110,3 +110,28 @@
 .spacer {
   padding-bottom: 15px;
 }
+
+.poseTagContainer {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+  border: solid #f45342 5px;
+  text-align: center;
+  justify-content: space-evenly;
+}
+
+.poseTagHeader {
+  font-size: 2rem;
+  font-style: bold;
+  text-decoration: underline;
+}
+
+.poseTagCategory {
+  font-size: 1.5rem;
+}
+
+.poseTagRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
