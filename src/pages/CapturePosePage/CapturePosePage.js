@@ -56,8 +56,8 @@ class NewRecordingPage extends Component {
   }
 
   handleStopRecord = () => {
-    this.canvasRef.current.style.display = 'none'
-    this.videoRef.current.style.display = 'block';
+    this.canvasRef.current.style.display = "none";
+    this.videoRef.current.style.display = "block";
     clearInterval(this.state.captureInterval);
   };
 
@@ -155,24 +155,25 @@ class NewRecordingPage extends Component {
     this.setState(prevState => ({
       poseNet: { ...prevState.poseNet, showDebug: !prevState.poseNet.showDebug }
     }));
-    // this.processPose();
+    const image = new Image();
+    image.src = this.state.currentPose.src;
+    this.processPose(image);
   };
 
   handleClickedPose = async (timeStamp, img) => {
-
-    const correctPose = this.state.poses.filter(
+    const newPoses = this.state.poses.slice();
+    const currentPoseIndex = newPoses.findIndex(
       pose => pose.timeStamp === timeStamp
     );
-
     this.canvasRef.current.style.display = "block";
     this.videoRef.current.style.display = "none";
-    const poseData = await this.processPose(img);
-    correctPose[0].poseData = poseData;
 
-    console.log(correctPose);
+    newPoses[currentPoseIndex].poseData = await this.processPose(img);
+
     this.setState({
-      currentPose: correctPose[0],
-      videoState: 'tagPose'
+      currentPose: newPoses[currentPoseIndex],
+      poses: newPoses,
+      videoState: "tagPose"
     });
   };
 
@@ -181,7 +182,7 @@ class NewRecordingPage extends Component {
       this.canvasRef.current.width = this.state.width;
       this.canvasRef.current.height = this.state.height;
       const ctx = this.canvasRef.current.getContext("2d");
-      
+
       ctx.translate(this.state.width, 0);
       ctx.scale(-1, 1);
       ctx.drawImage(
