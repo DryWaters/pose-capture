@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Container, Row, Col, Button } from "reactstrap";
+import { Container, Row, Col, Button, Input, Label } from "reactstrap";
 import * as posenet from "@tensorflow-models/posenet";
 import Layout from "../../components/Layout/Layout";
 import {
@@ -8,7 +8,7 @@ import {
   processPose,
   drawBoundingBox
 } from "../../utils/poseUtils";
-import Moment from "moment";
+import moment from "moment";
 
 import styles from "./CapturePosePage.module.css";
 
@@ -17,7 +17,6 @@ class NewRecordingPage extends Component {
     super(props);
     this.videoRef = React.createRef();
     this.canvasRef = React.createRef();
-    this.otherCanvasRef = React.createRef();
     this.state = {
       poseNet: {
         showVideo: true,
@@ -31,21 +30,17 @@ class NewRecordingPage extends Component {
         debugBoxColor: "blue",
         debugWidth: 5
       },
-      recorderSetup: false,
-      recorderState: "inactive",
-      videoState: "recording",
+      recordingState: "stopped",
       width: 640,
       height: 480,
-      videos: [],
+      poses: [],
+      captureDelay: 0,
+      captureInterval: null
     };
   }
 
   async componentDidMount() {
     await this.loadVideo();
-    await this.setupRecorder();
-    this.setState({
-      recorderSetup: true
-    });
   }
 
   componentWillUnmount() {
@@ -56,39 +51,8 @@ class NewRecordingPage extends Component {
     this.canvasRef.current = null;
   }
 
-  setupRecorder = async () => {
-    this.mediaRecorder = await new MediaRecorder(this.currentStream, {
-      mimeType: "video/webm; codecs=vp9"
-    });
-    this.mediaRecorder.ondataavailable = this.handleRecordVideo;
-    this.mediaRecorder.onstop = this.handleStopRecord;
-    this.currentVideo = [];
-  };
-
-  handleRecordVideo = blob => {
-    this.currentVideo.push(blob.data);
-  };
-
-  handleStopRecord = async () => {
-    await this.setState(prevState => {
-      const currentVideos = [...prevState.videos];
-      const newVideo = {
-        src: window.URL.createObjectURL(
-          new Blob(this.currentVideo, { mimeType: "video/webm; codecs=vp9" })
-        ),
-        screenShot: this.canvasRef.current
-          .toDataURL("image/png")
-          .replace("image/png", "image/octet-stream"),
-        timeStamp: new Moment().format(),
-        synced: false
-      };
-      currentVideos.push(newVideo);
-      this.currentVideo = [];
-
-      return {
-        videos: currentVideos
-      };
-    });
+  handleStopRecord = () => {
+    clearInterval(this.state.captureInterval);
   };
 
   setupCamera = async () => {
@@ -119,7 +83,6 @@ class NewRecordingPage extends Component {
     this.videoRef.current = await this.setupCamera();
     if (this.videoRef.current) {
       this.videoRef.current.play();
-      this.paintToCanvas();
     }
   };
 
@@ -138,10 +101,7 @@ class NewRecordingPage extends Component {
           this.state.poseNet.flipHorizontal,
           this.state.poseNet.outputStride
         );
-        const punchType = processPose(pose);
-        if (punchType !== "no_punch") {
-          // debounceUpdateState(punchType);
-        }
+        const poseData = processPose(pose);
       }
 
       ctx.clearRect(0, 0, this.state.width, this.state.height);
@@ -194,18 +154,17 @@ class NewRecordingPage extends Component {
   };
 
   setRecordingState = ({ id }) => {
-    if (this.state.recorderState === "inactive" && id === "record") {
-      this.mediaRecorder.start();
-    } else if (this.state.recorderState === "recording" && id === "stop") {
-      this.mediaRecorder.stop();
-    } else if (this.state.recorderState === "recording" && id === "pause") {
-      this.mediaRecorder.pause();
-    } else if (this.state.recorderState === "paused" && id === "pause") {
-      this.mediaRecorder.resume();
+    let newState;
+    if (this.state.recordingState === "stopped" && id === "record") {
+      newState = "recording";
+      this.makeScreenshots();
+    } else if (this.state.recordingState === "recording" && id === "stop") {
+      newState = "stopped";
+      this.handleStopRecord();
     }
 
     this.setState({
-      recorderState: this.mediaRecorder.state
+      recordingState: newState
     });
   };
 
@@ -215,11 +174,11 @@ class NewRecordingPage extends Component {
     }));
   };
 
-  handleClickPlayRecordedVideo = timeStamp => {
+  handleClickedPose = timeStamp => {
     this.setState({
       videoState: "playing"
     });
-    const correctVideo = this.state.videos.filter(
+    const correctVideo = this.state.poses.filter(
       video => video.timeStamp === timeStamp
     );
     this.videoRef.current.srcObject = null;
@@ -230,38 +189,70 @@ class NewRecordingPage extends Component {
     this.paintToCanvas();
   };
 
-  handleClickRecordVideos = () => {
+  handleRecordPoses = () => {
     this.setState({
       videoState: "recording"
     });
-    this.videoRef.current.src = null;
-    this.videoRef.current.srcObject = null;
-    this.videoRef.current.srcObject = this.currentStream;
-    this.videoRef.current.play();
     this.paintToCanvas();
   };
 
-  handleUploadVideo = timeStamp => {
+  makeScreenshots = () => {
+    const captureInterval = setInterval(() => {
+      this.canvasRef.current.width = this.state.width;
+      this.canvasRef.current.height = this.state.height;
+      const ctx = this.canvasRef.current.getContext("2d");
+
+      ctx.drawImage(
+        this.videoRef.current,
+        0,
+        0,
+        this.state.width,
+        this.state.height
+      );
+      const dataURI = this.canvasRef.current.toDataURL("image/png");
+      this.setState(prevState => {
+        const newPoses = prevState.poses.slice();
+        newPoses.push({
+          src: dataURI,
+          timeStamp: new moment().valueOf(),
+          saved: false
+        });
+        return {
+          ...prevState,
+          poses: newPoses,
+          captureInterval
+        };
+      });
+    }, this.state.captureDelay * 1000);
+  };
+
+  handleTagPose = timeStamp => {
     // fetch upload video
     // if successful change to check mark
     // else stay unchecked
 
     this.setState(prevState => {
-      const oldVideos = prevState.videos.slice();
-      oldVideos.find(video => video.timeStamp === timeStamp).synced = true;
+      const oldPoses = prevState.poses.slice();
+      oldPoses.find(pose => pose.timeStamp === timeStamp).saved = true;
       return {
-        videos: oldVideos
+        poses: oldPoses
       };
+    });
+  };
+
+  handleDelayChange = e => {
+    this.setState({
+      captureDelay: e.target.value
     });
   };
 
   render() {
     const displayRecordControls = () => {
-      if (!this.state.recorderSetup) {
+      if (!this.state.recordingState) {
         return;
       }
 
-      if (this.state.recorderState === "inactive") {
+      if (this.state.recordingState === "stopped") {
         return (
           <Col className={styles.videoButtonContainer}>
             <Button
@@ -270,23 +261,11 @@ class NewRecordingPage extends Component {
             >
               Record
             </Button>
-            {/* Test Button for saving videos for testing <Button
-              className={styles.videoControl}
-              onClick={() => this.handleSaveRecordedVideo()}
-            >
-              Save Image
-            </Button> */}
           </Col>
         );
       } else {
         return (
           <Col className={styles.videoButtonContainer}>
-            <Button
-              className={styles.videoControl}
-              onClick={() => this.setRecordingState({ id: "pause" })}
-            >
-              {this.state.recorderState === "paused" ? "Resume" : "Pause"}
-            </Button>
             <Button
               className={styles.videoControl}
               onClick={() => this.setRecordingState({ id: "stop" })}
@@ -298,35 +277,19 @@ class NewRecordingPage extends Component {
       }
     };
 
-    const displayPlayerControls = () => {
-      return (
-        <Col className={styles.videoButtonContainer}>
-          <Button
-            className={styles.videoControl}
-            onClick={this.handleClickRecordVideos}
-          >
-            Record New Video
-          </Button>
-        </Col>
-      );
-    };
-
     const displayPoses = () => {
-      return this.state.videos.map(video => {
+      return this.state.poses.map(pose => {
         return (
-          <div className={styles.recordedVideoContainer} key={video.timeStamp}>
+          <div className={styles.poseContainer} key={pose.timeStamp}>
             <img
-              className={styles.recordedVideo}
-              src={video.screenShot}
+              className={styles.pose}
+              src={pose.src}
               height="75px"
               alt="Recording Video"
-              onClick={() => this.handleClickPlayRecordedVideo(video.timeStamp)}
+              onClick={() => this.handleClickedPose(pose.timeStamp)}
             />
-            <div
-              className={styles.videoStatus}
-              onClick={() => this.handleUploadVideo(video.timeStamp)}
-            >
-              {video.synced ? "\u{2705}" : "\u{274C}"}
+            <div className={styles.poseStatus}>
+              {pose.saved ? "\u{2705}" : "\u{274C}"}
             </div>
           </div>
         );
@@ -335,10 +298,20 @@ class NewRecordingPage extends Component {
 
     return (
       <Layout>
-        <Container className={styles.newRecordingContainer}>
+        <Container className={styles.capturePoseContainer}>
           <Row>
             <Col className={styles.debugContainer}>
               <Button onClick={this.toggleShowDebug}>Show Debug Lines</Button>
+              <Label className={styles.label}>
+                Screenshot timer
+                <Input
+                  type="number"
+                  min="0"
+                  value={this.state.captureDelay}
+                  onChange={this.handleDelayChange}
+                />
+                secs
+              </Label>
             </Col>
           </Row>
           <Row>
@@ -346,23 +319,16 @@ class NewRecordingPage extends Component {
               <video
                 ref={this.videoRef}
                 srcobject={this.currentStream}
-                className={styles.video}
-              />
-              <canvas
-                className={`${styles.canvas} ${
-                  this.state.recorderState === "recording"
+                className={`${styles.video} ${
+                  this.state.recordingState === "recording"
                     ? styles.videoRecording
                     : styles.notRecording
                 }`}
-                ref={this.canvasRef}
               />
+              <canvas className={styles.canvas} ref={this.canvasRef} />
             </Col>
           </Row>
-          <Row>
-            {this.state.videoState === "playing"
-              ? displayPlayerControls()
-              : displayRecordControls()}
-          </Row>
+          <Row>{displayRecordControls()}</Row>
           <Row>
             <Col className={styles.recordedPosesContainer}>
               {displayPoses()}
