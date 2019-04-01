@@ -212,22 +212,66 @@ class NewRecordingPage extends Component {
     }, this.state.captureDelay * 1000);
   };
 
-  handleTagPose = punchType => {
-    // fetch upload video
-    // if successful change to check mark
-    // else stay unchecked
+  handleTagPose = async punchType => {
+    const newPoses = this.state.poses.slice();
+    const currentPose = newPoses.find(
+      pose => pose.timeStamp === this.state.currentPose.timeStamp
+    );
 
-    this.setState(prevState => {
-      const oldPoses = prevState.poses.slice();
-      const currentPose = oldPoses.find(
-        pose => pose.timeStamp === this.state.currentPose.timeStamp
-      );
-      currentPose.saved = true;
-      currentPose.tag = punchType;
+    if (currentPose.tag === punchType) {
+      try {
+        await this.deletePunchData({
+          timeStamp: currentPose.timeStamp,
+          tag: currentPose.tag
+        });
+        currentPose.tag = null;
+        currentPose.saved = false;
+        this.setState({
+          poses: newPoses,
+          currentPose
+        });
+      } catch {
+        alert("Unable to delete punch data !");
+      }
+    } else {
+      try {
+        currentPose.tag = punchType;
+        currentPose.saved = true;
+        currentPose.poseData.push(punchType);
+        await this.savePunchData({
+          timeStamp: currentPose.timeStamp,
+          tag: currentPose.tag,
+          poseData: currentPose.poseData
+        });
+        this.setState({
+          poses: newPoses,
+          currentPose
+        });
+      } catch {
+        alert("Unable to delete punch data !");
+      }
+    }
+  };
 
-      return {
-        poses: oldPoses
-      };
+  deletePunchData = pose => {
+    return fetch("http://localhost:3000/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      mode: "cors",
+      body: JSON.stringify(pose)
+    });
+  };
+
+  savePunchData = pose => {
+    return fetch("http://localhost:3000/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      mode: "cors",
+      body: JSON.stringify(pose)
     });
   };
 
