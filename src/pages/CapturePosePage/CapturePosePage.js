@@ -23,8 +23,8 @@ class NewRecordingPage extends Component {
       poseNet: {
         showDebug: false,
         flipHorizontal: false,
-        imageScaleFactor: 0.75,
-        outputStride: 8,
+        imageScaleFactor: 0.5,
+        outputStride: 16,
         minPoseConfidence: 0.1,
         minPartConfidence: 0.5,
         debugColor: "#f45342",
@@ -97,7 +97,7 @@ class NewRecordingPage extends Component {
     this.canvasRef.current.width = this.state.width;
     this.canvasRef.current.height = this.state.height;
     if (!this.net) {
-      this.net = await posenet.load(1.01);
+      this.net = await posenet.load(0.75);
     }
 
     ctx.clearRect(0, 0, this.state.width, this.state.height);

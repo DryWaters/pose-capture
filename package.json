@@ -15,7 +15,8 @@
     "reactstrap": "^7.1.0"
   },
   "scripts": {
-    "start": "cross-env REACT_APP_TEST=true PORT=3010 react-scripts start",
+    "start": "cross-env REACT_APP_TEST=true PORT=3010 react-scripts start && npm run start-server",
+    "start-server": "cross-env cd ./server && npm run start",
     "build": "react-scripts build",
     "test": "react-scripts test --verbose=false --env=jsdom",
     "test:nowatch": "cross-env CI=true react-scripts test --env=jsdom",
