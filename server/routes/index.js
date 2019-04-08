@@ -9,12 +9,13 @@ router.post("/save", (req, res, next) => {
     JSON.stringify(req.body.poseData),
     err => {
       if (err) {
-        res.json({
+        console.log('error');
+        return res.json({
           status: "error",
           message: `Unable to save ${req.body.timestamp} as a ${req.body.tag}`
         });
       }
-      res.json({
+      return res.json({
         status: "ok",
         message: `Saved ${req.body.timestamp} as a ${req.body.tag}`
       });
@@ -25,12 +26,12 @@ router.post("/save", (req, res, next) => {
 router.post("/delete", (req, res) => {
   fs.unlink(`poses/${req.body.tag}/${req.body.timeStamp}.json`, err => {
     if (err) {
-      res.json({
+      return res.json({
         status: "error",
         message: `Unable to delete ${req.body.timestamp}`
       });
     }
-    res.json({
+    return res.json({
       status: "ok",
       message: `Deleted ${req.body.timestamp}`
     });

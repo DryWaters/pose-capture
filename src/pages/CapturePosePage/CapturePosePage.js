@@ -23,8 +23,8 @@ class NewRecordingPage extends Component {
       poseNet: {
         showDebug: false,
         flipHorizontal: false,
-        imageScaleFactor: 0.75,
-        outputStride: 8,
+        imageScaleFactor: 0.5,
+        outputStride: 16,
         minPoseConfidence: 0.1,
         minPartConfidence: 0.5,
         debugColor: "#f45342",
@@ -97,7 +97,7 @@ class NewRecordingPage extends Component {
     this.canvasRef.current.width = this.state.width;
     this.canvasRef.current.height = this.state.height;
     if (!this.net) {
-      this.net = await posenet.load(1.01);
+      this.net = await posenet.load(0.75);
     }
 
     ctx.clearRect(0, 0, this.state.width, this.state.height);
@@ -220,39 +220,54 @@ class NewRecordingPage extends Component {
       pose => pose.timeStamp === this.state.currentPose.timeStamp
     );
 
-    if (currentPose.tag === punchType) {
+    if (punchType === "delete") {
       try {
         await this.deletePunchData({
           timeStamp: currentPose.timeStamp,
           tag: currentPose.tag
         });
-        currentPose.tag = null;
+
         currentPose.saved = false;
-        this.setState({
-          poses: newPoses,
+        currentPose.tag = null;
+        return this.setState({
           currentPose
         });
-      } catch {
-        alert("Unable to delete punch data !");
+      } catch (err) {
+        console.log("Unable to delete pose");
       }
-    } else {
+    }
+
+    if (currentPose.saved) {
       try {
+        await this.deletePunchData({
+          timeStamp: currentPose.timeStamp,
+          tag: currentPose.tag
+        });
         currentPose.tag = punchType;
-        currentPose.saved = true;
-        currentPose.poseData.push(punchType);
         await this.savePunchData({
           timeStamp: currentPose.timeStamp,
           tag: currentPose.tag,
           poseData: currentPose.poseData
         });
-        this.setState({
-          poses: newPoses,
-          currentPose
+      } catch (err) {
+        console.log("Unable to save pose");
+      }
+    } else {
+      try {
+        currentPose.tag = punchType;
+        await this.savePunchData({
+          timeStamp: currentPose.timeStamp,
+          tag: currentPose.tag,
+          poseData: currentPose.poseData
         });
-      } catch {
-        alert("Unable to delete punch data !");
+      } catch (err) {
+        console.log("Unable to save pose");
       }
     }
+    currentPose.saved = true;
+    this.setState({
+      currentPose
+    });
   };
 
   deletePunchData = pose => {
@@ -432,17 +447,17 @@ class NewRecordingPage extends Component {
               Right Body Hook
             </Button>
           </div>
-          <div className={styles.poseTagCategory}>Rest</div>
+          <div className={styles.poseTagCategory}>Delete</div>
           <div className={styles.poseTagRow}>
             <Button
               className={
-                this.state.currentPose.tag === "rest"
+                this.state.currentPose.tag === "delete"
                   ? styles.tagButtonSelected
                   : ""
               }
-              onClick={() => this.handleTagPose("rest")}
+              onClick={() => this.handleTagPose("delete")}
             >
-              Rest
+              Delete
             </Button>
           </div>
         </Col>
