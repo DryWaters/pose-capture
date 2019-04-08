@@ -15,12 +15,13 @@
     "reactstrap": "^7.1.0"
   },
   "scripts": {
-    "start": "cross-env REACT_APP_TEST=true PORT=3010 react-scripts start && npm run start-server",
-    "start-server": "cross-env cd ./server && npm run start",
+    "client": "cross-env REACT_APP_TEST=true PORT=3010 react-scripts start",
+    "server": "cd server && npm start",
     "build": "react-scripts build",
     "test": "react-scripts test --verbose=false --env=jsdom",
     "test:nowatch": "cross-env CI=true react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start": "concurrently \"npm run client\" \"npm run server\" "
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -32,6 +33,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "cross-env": "^5.2.0",
     "enzyme": "^3.9.0",
     "enzyme-adapter-react-16": "^1.11.2"
