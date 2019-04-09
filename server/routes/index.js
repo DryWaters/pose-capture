@@ -9,7 +9,7 @@ router.post("/save", (req, res, next) => {
     JSON.stringify(req.body.poseData),
     err => {
       if (err) {
-        console.log('error');
+        console.log(err);
         return res.json({
           status: "error",
           message: `Unable to save ${req.body.timestamp} as a ${req.body.tag}`
