@@ -167,10 +167,13 @@ class NewRecordingPage extends Component {
     const currentPoseIndex = newPoses.findIndex(
       pose => pose.timeStamp === timeStamp
     );
+    newPoses.forEach(pose => (pose.selected = false));
+
     this.canvasRef.current.style.display = "block";
     this.videoRef.current.style.display = "none";
 
     newPoses[currentPoseIndex].poseData = await this.processPose(img);
+    newPoses[currentPoseIndex].selected = true;
 
     this.setState({
       currentPose: newPoses[currentPoseIndex],
@@ -203,7 +206,8 @@ class NewRecordingPage extends Component {
           timeStamp: new moment().valueOf(),
           saved: false,
           tag: null,
-          poseData: null
+          poseData: null,
+          selected: false
         });
         return {
           ...prevState,
@@ -219,23 +223,6 @@ class NewRecordingPage extends Component {
     const currentPose = newPoses.find(
       pose => pose.timeStamp === this.state.currentPose.timeStamp
     );
-
-    if (punchType === "delete") {
-      try {
-        await this.deletePunchData({
-          timeStamp: currentPose.timeStamp,
-          tag: currentPose.tag
-        });
-
-        currentPose.saved = false;
-        currentPose.tag = null;
-        return this.setState({
-          currentPose
-        });
-      } catch (err) {
-        console.log("Unable to delete pose");
-      }
-    }
 
     if (currentPose.saved) {
       try {
@@ -292,9 +279,52 @@ class NewRecordingPage extends Component {
     });
   };
 
+  handleDeletePunch = async () => {
+    const newPoses = this.state.poses.slice();
+    const currentPose = newPoses.find(
+      pose => pose.timeStamp === this.state.currentPose.timeStamp
+    );
+
+    try {
+      await this.deletePunchData({
+        timeStamp: currentPose.timeStamp,
+        tag: currentPose.tag
+      });
+
+      currentPose.saved = false;
+      currentPose.tag = null;
+      return this.setState({
+        currentPose
+      });
+    } catch (err) {
+      console.log("Unable to delete pose");
+    }
+  };
+
   handleDelayChange = e => {
     this.setState({
       captureDelay: e.target.value
+    });
+  };
+
+  handleNextImage = async () => {
+    const newPoses = this.state.poses.slice();
+    let currentPoseIndex = newPoses.findIndex(
+      pose => pose.timeStamp === this.state.currentPose.timeStamp
+    );
+    newPoses.forEach(pose => (pose.selected = false));
+
+    currentPoseIndex = (currentPoseIndex + 1) % this.state.poses.length;
+
+    const image = new Image();
+    image.src = this.state.currentPose.src;
+
+    newPoses[currentPoseIndex].selected = true;
+    newPoses[currentPoseIndex].poseData = await this.processPose(image);
+
+    this.setState({
+      currentPose: newPoses[currentPoseIndex],
+      poses: newPoses
     });
   };
 
@@ -334,7 +364,9 @@ class NewRecordingPage extends Component {
         return (
           <div className={styles.poseContainer} key={pose.timeStamp}>
             <img
-              className={styles.pose}
+              className={`${styles.pose} ${
+                pose.selected ? styles.poseSelected : ""
+              }`}
               src={pose.src}
               height="75px"
               alt="Recording Video"
@@ -447,18 +479,10 @@ class NewRecordingPage extends Component {
               Right Body Hook
             </Button>
           </div>
-          <div className={styles.poseTagCategory}>Delete</div>
+          <div className={styles.poseTagCategory}>Other</div>
           <div className={styles.poseTagRow}>
-            <Button
-              className={
-                this.state.currentPose.tag === "delete"
-                  ? styles.tagButtonSelected
-                  : ""
-              }
-              onClick={() => this.handleTagPose("delete")}
-            >
-              Delete
-            </Button>
+            <Button onClick={() => this.handleDeletePunch()}>Delete</Button>
+            <Button onClick={() => this.handleNextImage()}>Next</Button>
           </div>
         </Col>
       );

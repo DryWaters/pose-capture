@@ -8,8 +8,6 @@ function toTuple({ x, y }) {
 }
 
 export const processPose = pose => {
-  const normalizedPose = normalizePose(pose);
-  console.log(JSON.stringify(normalizedPose));
   return normalizePose(pose);
 };
 

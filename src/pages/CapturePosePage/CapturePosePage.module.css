@@ -59,12 +59,15 @@
 
 .pose {
   margin: 10px;
-  border: solid 3px black;
 }
 
 .pose:hover {
-  border: solid 3px blue;
+  outline: solid 5px blue;
   cursor: pointer;
+}
+
+.poseSelected {
+  outline: solid 5px #f45342;
 }
 
 @keyframes recording {
