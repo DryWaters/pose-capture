@@ -317,7 +317,7 @@ class NewRecordingPage extends Component {
     currentPoseIndex = (currentPoseIndex + 1) % this.state.poses.length;
 
     const image = new Image();
-    image.src = this.state.currentPose.src;
+    image.src = newPoses[currentPoseIndex].src;
 
     newPoses[currentPoseIndex].selected = true;
     newPoses[currentPoseIndex].poseData = await this.processPose(image);
