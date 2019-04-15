@@ -16,8 +16,10 @@ const normalizePose = pose => {
   const normalizedArray = new Array(34);
 
   for (let index in pose.keypoints) {
-    normalizedArray[index * 2] = pose.keypoints[index].position.x / boundingBox.maxX;
-    normalizedArray[index * 2  + 1] = pose.keypoints[index].position.y / boundingBox.maxY;
+    normalizedArray[index * 2] =
+      pose.keypoints[index].position.x / boundingBox.maxX;
+    normalizedArray[index * 2 + 1] =
+      pose.keypoints[index].position.y / boundingBox.maxY;
   }
 
   return normalizedArray;
@@ -36,10 +38,12 @@ export function drawKeyPoints(
       canvasContext.beginPath();
       canvasContext.arc(x * scale, y * scale, pointRadius, 0, 2 * Math.PI);
 
-      if (keypoint.part === "rightWrist") {
-        canvasContext.fillStyle = 'blue';
+      if (keypoint.part.includes("right")) {
+        canvasContext.fillStyle = "#0000FFAA";
+      } else if (keypoint.part.includes("left")) {
+        canvasContext.fillStyle = "#E74C3CAA";
       } else {
-        canvasContext.fillStyle = skeletonColor;
+        canvasContext.fillStyle = "#28B463AA";
       }
       canvasContext.fill();
     }
@@ -72,7 +76,7 @@ export function drawBoundingBox(keypoints, ctx, color) {
     boundingBox.maxY - boundingBox.minY
   );
 
-  ctx.strokeStyle = color;
+  ctx.strokeStyle = "#F4D03F55";
   ctx.stroke();
 }
 
@@ -88,12 +92,25 @@ export function drawSkeleton(
     keypoints,
     minConfidence
   );
-
+  let skeletonColor;
   adjacentKeyPoints.forEach(keypoints => {
+    if (
+      keypoints[0].part.includes("right") ||
+      keypoints[1].part.includes("right")
+    ) {
+      skeletonColor = "#0000FFAA";
+    } else if (
+      keypoints[0].part.includes("left") ||
+      keypoints[1].part.includes("left")
+    ) {
+      skeletonColor = "#E74C3CAA";
+    } else {
+      skeletonColor = "#28B463AA";
+    }
     drawSegment(
       toTuple(keypoints[0].position),
       toTuple(keypoints[1].position),
-      color,
+      skeletonColor,
       lineWidth,
       scale,
       canvasContext

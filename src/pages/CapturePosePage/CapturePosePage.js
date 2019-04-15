@@ -129,7 +129,7 @@ class NewRecordingPage extends Component {
           this.state.poseNet.debugWidth,
           ctx
         );
-        drawBoundingBox(pose.keypoints, ctx, this.state.poseNet.debugBoxColor);
+        drawBoundingBox(pose.keypoints, ctx);
       }
     }
     return poseData;
