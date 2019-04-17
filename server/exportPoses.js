@@ -11,7 +11,9 @@ function getDirectories(path) {
 function getPosesInDirectory(path) {
   fs.readdirSync(`poses/${path}`).forEach(file => {
     if (file.endsWith('.json')) {
-      allPoses.push(JSON.parse(fs.readFileSync(`poses/${path}/${file}`)));
+      const currentPoseData = JSON.parse(fs.readFileSync(`poses/${path}/${file}`, 'utf8'))
+      currentPoseData.push(`${path}`);
+      allPoses.push(currentPoseData);
     }
   });
 }
