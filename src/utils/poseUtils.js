@@ -38,7 +38,13 @@ export function drawKeyPoints(
       canvasContext.beginPath();
       canvasContext.arc(x * scale, y * scale, pointRadius, 0, 2 * Math.PI);
 
-      if (keypoint.part.includes("right")) {
+      console.log(keypoint.part);
+      if (
+        keypoint.part === "leftShoulder" ||
+        keypoint.part === "rightShoulder"
+      ) {
+        canvasContext.fillStyle = "#00FF00AA";
+      } else if (keypoint.part.includes("right")) {
         canvasContext.fillStyle = "#0000FFAA";
       } else if (keypoint.part.includes("left")) {
         canvasContext.fillStyle = "#E74C3CAA";
@@ -76,7 +82,7 @@ export function drawBoundingBox(keypoints, ctx, color) {
     boundingBox.maxY - boundingBox.minY
   );
 
-  ctx.strokeStyle = "#F4D03F55";
+  ctx.strokeStyle = "#F4D03F11";
   ctx.stroke();
 }
 
@@ -95,6 +101,13 @@ export function drawSkeleton(
   let skeletonColor;
   adjacentKeyPoints.forEach(keypoints => {
     if (
+      (keypoints[0].part === "leftShoulder" &&
+        keypoints[1].part === "rightShoulder") ||
+      (keypoints[1].part === "leftShoulder" &&
+        keypoints[0].part === "rightShoulder")
+    ) {
+      skeletonColor = "#00FF00AA";
+    } else if (
       keypoints[0].part.includes("right") ||
       keypoints[1].part.includes("right")
     ) {
