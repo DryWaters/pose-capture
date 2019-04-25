@@ -231,10 +231,12 @@ class NewRecordingPage extends Component {
           tag: currentPose.tag
         });
         currentPose.tag = punchType;
+
         await this.savePunchData({
           timeStamp: currentPose.timeStamp,
           tag: currentPose.tag,
-          poseData: currentPose.poseData
+          poseData: currentPose.poseData,
+          screenshot: this.canvasRef.current.toDataURL('image/png')
         });
       } catch (err) {
         console.log("Unable to save pose");
@@ -245,7 +247,8 @@ class NewRecordingPage extends Component {
         await this.savePunchData({
           timeStamp: currentPose.timeStamp,
           tag: currentPose.tag,
-          poseData: currentPose.poseData
+          poseData: currentPose.poseData,
+          screenshot: this.canvasRef.current.toDataURL('image/png')
         });
       } catch (err) {
         console.log("Unable to save pose");
