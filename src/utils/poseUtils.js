@@ -13,14 +13,32 @@ export const processPose = pose => {
 
 const normalizePose = pose => {
   const boundingBox = posenet.getBoundingBox(pose.keypoints);
-  const normalizedArray = new Array(34);
+  let normalizedArray = new Array(34);
 
+  // move all points to top left corner
   for (let index in pose.keypoints) {
-    normalizedArray[index * 2] =
-      pose.keypoints[index].position.x / boundingBox.maxX;
-    normalizedArray[index * 2 + 1] =
-      pose.keypoints[index].position.y / boundingBox.maxY;
+    normalizedArray[index * 2] = pose.keypoints[index].position.x - boundingBox.minX;
+    normalizedArray[index * 2 + 1] = pose.keypoints[index].position.y - boundingBox.minY;
   }
+
+  // normalize between 0 and 1
+  const width = boundingBox.maxX - boundingBox.minX;
+  const height = boundingBox.maxY - boundingBox.minY;
+
+  normalizedArray = normalizedArray.map((point, index) => {
+    if (index % 2 === 0) {
+      return point / width
+    } else {
+      return point / height;
+    }
+  })
+
+  // for (let index in pose.keypoints) {
+  //   normalizedArray[index * 2] = 
+  //     pose.keypoints[index].position.x / boundingBox.maxX;
+  //   normalizedArray[index * 2 + 1] =
+  //     pose.keypoints[index].position.y / boundingBox.maxY;
+  // }
 
   return normalizedArray;
 };
@@ -37,8 +55,6 @@ export function drawKeyPoints(
       const { x, y } = keypoint.position;
       canvasContext.beginPath();
       canvasContext.arc(x * scale, y * scale, pointRadius, 0, 2 * Math.PI);
-
-      console.log(keypoint.part);
       if (
         keypoint.part === "leftShoulder" ||
         keypoint.part === "rightShoulder"
