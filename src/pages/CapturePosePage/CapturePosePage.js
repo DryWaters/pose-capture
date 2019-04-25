@@ -139,6 +139,7 @@ class NewRecordingPage extends Component {
     let newState;
     if (this.state.recordingState === "stopped" && id === "record") {
       newState = "recording";
+      this.handleStopRecord();
       this.makeScreenshots();
     } else if (this.state.recordingState === "recording" && id === "stop") {
       newState = "stopped";
