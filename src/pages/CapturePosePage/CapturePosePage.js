@@ -21,7 +21,7 @@ class NewRecordingPage extends Component {
     this.audioRef = React.createRef();
     this.state = {
       poseNet: {
-        showDebug: false,
+        showDebug: true,
         flipHorizontal: false,
         imageScaleFactor: 0.5,
         outputStride: 16,
