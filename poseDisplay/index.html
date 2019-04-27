@@ -7,13 +7,26 @@
     <title>Pose Display</title>
   </head>
   <body>
+    <h1>Pose Display</h1>
     <div>
-      <label for="pose0">Pose 0</label>
+      <label for="pose0">Pose JSON</label>
       <input type="text" name="pose0" id="pose0" />
-      <label for="pose1">Pose 1</label>
+      <label for="pose1">Matching Pose Timestamp</label>
       <input type="text" name="pose1" id="pose1" />
+      <select name="punchType" id="punchType">
+        <option value="jab">Jab</option>
+        <option value="leftBodyHook">Left Body Hook</option>
+        <option value="leftHook">LeftHook</option>
+        <option value="leftUppercut">Left Uppercut</option>
+        <option value="noPunch">No Punch</option>
+        <option value="powerRear">Power Rear</option>
+        <option value="rightBodyHook">Right Body Hook</option>
+        <option value="rightHook">Right Hook</option>
+        <option value="rightUppercut">Right Uppercut</option>
+      </select>
     </div>
     <canvas id="canvas"></canvas>
+    <img src="#" alt="Pose Image" style="display: none;" id="poseImage" />
     <script src="poseDisplay.js"></script>
   </body>
 </html>

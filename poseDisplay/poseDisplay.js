@@ -1,14 +1,17 @@
 const pose0 = document.querySelector("#pose0");
 const pose1 = document.querySelector("#pose1");
 const canvas = document.querySelector("#canvas");
+const punchType = document.querySelector("#punchType");
+const poseImage = document.querySelector("#poseImage");
 canvas.width = 800;
 canvas.height = 400;
 const ctx = canvas.getContext("2d");
 
 pose0.addEventListener("change", e => drawPose());
 pose1.addEventListener("change", e => drawPose());
+punchType.addEventListener("change", e => drawPose());
 
-function drawPose() {
+async function drawPose() {
   ctx.clearRect(0, 0, 800, 400);
   ctx.strokeStyle = "black";
   ctx.beginPath();
@@ -26,9 +29,20 @@ function drawPose() {
   }
 
   if (pose1.value) {
-    const pose = JSON.parse(pose1.value);
-    drawKeypoints(pose, 1);
-    drawSkeleton(pose, 1);
+    try {
+      const response = await fetch(
+        `http://localhost:3000/poses/${punchType.value}/${pose1.value}.json`
+      );
+      const pose = await response.json();
+      poseImage.src = `http://localhost:3000/screenshots/${punchType.value}/${
+        pose1.value
+      }.png`;
+      poseImage.style.display = "inline";
+      drawKeypoints(pose, 1);
+      drawSkeleton(pose, 1);
+    } catch (err) {
+      alert("Check timestamp and punch type.  Does not exist!");
+    }
   }
 }
 
