@@ -31,10 +31,10 @@ async function drawPose() {
   if (pose1.value) {
     try {
       const response = await fetch(
-        `http://localhost:3000/poses/${punchType.value}/${pose1.value}.json`
+        `http://localhost:3015/poses/${punchType.value}/${pose1.value}.json`
       );
       const pose = await response.json();
-      poseImage.src = `http://localhost:3000/screenshots/${punchType.value}/${
+      poseImage.src = `http://localhost:3015/screenshots/${punchType.value}/${
         pose1.value
       }.png`;
       poseImage.style.display = "inline";

@@ -262,7 +262,7 @@ class NewRecordingPage extends Component {
   };
 
   deletePunchData = pose => {
-    return fetch("http://localhost:3000/delete", {
+    return fetch("http://localhost:3015/delete", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -273,7 +273,7 @@ class NewRecordingPage extends Component {
   };
 
   savePunchData = pose => {
-    return fetch("http://localhost:3000/save", {
+    return fetch("http://localhost:3015/save", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
